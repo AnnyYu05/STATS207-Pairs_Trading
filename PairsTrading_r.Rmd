@@ -1,0 +1,183 @@
+---
+title: "Final Project"
+output: pdf_document
+date: "2024-06-10"
+---
+```{r}
+spread1<- read.csv("/Users/anny/Downloads/XEL_WEC_spread.csv")
+spread2 <- read.csv("/Users/anny/Downloads/EQR_ESS_spread.csv")
+spread3 <- read.csv("/Users/anny/Downloads/CCL_NCLH_spread.csv")
+spread4 <- read.csv("/Users/anny/Downloads/CMS_ETR_spread.csv")
+spread5 <- read.csv("/Users/anny/Downloads/AVB_UDR_spread.csv")
+acf(spread1$spread)
+acf(spread2$spread)
+acf(spread3$spread)
+acf(spread4$spread)
+acf(spread5$spread)
+
+```
+# Augmented Dickey–Fuller test
+
+```{r}
+spreads <- list(spread1$spread, spread2$spread, spread3$spread, spread4$spread, spread5$spread)
+
+# Function to perform ADF test and print the result
+adf_test <- function(series) {
+  result <- adf.test(series)
+  print(result)
+  if (result$p.value <= 0.05) {
+    cat("Reject the null hypothesis - series is stationary\n")
+  } else {
+    cat("Fail to reject the null hypothesis - series is non-stationary\n")
+  }
+}
+
+# Iterate through each spread series
+for (i in 1:length(spreads)) {
+  cat(paste("\nProcessing spread", i, ":\n"))
+  
+  # Convert to time series with frequency 252
+  time_series <- ts(spreads[[i]], frequency = 252)
+  
+  # Original series ADF test
+  cat("Original Series ADF Test:\n")
+  adf_test(time_series)
+  
+  # First-order differencing
+  differenced_series_1 <- diff(time_series, differences = 1)
+  cat("\nFirst-order Differenced Series ADF Test:\n")
+  adf_test(differenced_series_1)
+  
+  # Second-order differencing (if needed)
+  differenced_series_2 <- diff(time_series, differences = 2)
+  cat("\nSecond-order Differenced Series ADF Test:\n")
+  adf_test(differenced_series_2)
+  
+  # Plot the original and differenced series
+  par(mfrow = c(3, 1))
+  plot(time_series, main = paste("Original Time Series - Spread", i), ylab = "Value", xlab = "Date")
+  plot(differenced_series_1, main = paste("First-order Differenced Time Series - Spread", i), ylab = "Differenced Value", xlab = "Date")
+  plot(differenced_series_2, main = paste("Second-order Differenced Time Series - Spread", i), ylab = "Differenced Value", xlab = "Date")
+}
+```
+
+
+```{r}
+diff1 =  diff(spread3$spread, differences = 1)
+acf(diff1)
+pacf(diff1)
+diff2 =  diff(spread5$spread, differences = 1)
+acf(diff2)
+pacf(diff2)
+model3 = sarima(diff1,order = c(0,1,5))
+model5 = arima(diff2,order = c(0,1,5))
+
+acf(residuals(model3))
+acf(residuals(model5))
+```
+```{r}
+library(astsa)
+smodel3 = sarima(diff1, 0, 1, 5, 1, 1, 1, 5)
+```
+```{r}
+acf(spread1$spread)
+acf(spread2$spread)
+acf(spread4$spread)
+
+pacf(spread1$spread)
+pacf(spread2$spread)
+pacf(spread4$spread)
+```
+
+
+```{r}
+time_series <- ts(spread5$spread)
+results <- data.frame(p = integer(), q = integer(), AIC = numeric(), BIC = numeric())
+
+for (p in 0:5) {
+  for (q in 0:8) {
+    try({
+      model <- arima(time_series, order = c(p, , q))
+      aic <- AIC(model)
+      bic <- BIC(model)
+      
+      results <- rbind(results, data.frame(p = p, q = q, AIC = aic, BIC = bic))
+    }, silent = TRUE)
+  }
+}
+View(results)
+```
+
+```{r}
+if (!require("forecast")) install.packages("forecast")
+if (!require("tseries")) install.packages("tseries")
+if (!require("urca")) install.packages("urca")
+
+library(forecast)
+library(tseries)
+library(urca)
+
+time_series1 <-ts(spread1$spread, frequency = 5)
+best_sarima_model <- auto.arima(time_series1, seasonal = TRUE, stepwise = FALSE, approximation = FALSE)
+
+# Print the summary of the best model
+summary(best_sarima_model)
+
+# Print the AIC of the best model
+cat("Best SARIMA model AIC for top 1:", best_sarima_model$aic, "\n")
+```
+
+```{r}
+time_series2 <-ts(spread2$spread, frequency = 5)
+best_sarima_model <- auto.arima(time_series2, seasonal = TRUE, stepwise = FALSE, approximation = FALSE)
+
+# Print the summary of the best model
+summary(best_sarima_model)
+
+# Print the AIC of the best model
+cat("Best SARIMA model AIC for 2", best_sarima_model$aic, "\n")
+
+```
+
+
+```{r}
+time_series3 <-ts(spread3$spread, frequency = 5)
+best_sarima_model <- auto.arima(time_series3, seasonal = TRUE, stepwise = FALSE, approximation = FALSE)
+
+# Print the summary of the best model
+summary(best_sarima_model)
+
+# Print the AIC of the best model
+cat("Best SARIMA model AIC for 3:", best_sarima_model$aic, "\n")
+```
+```{r}
+time_series4 <-ts(spread4$spread, frequency = 5)
+best_sarima_model <- auto.arima(time_series4, seasonal = TRUE, stepwise = FALSE, approximation = FALSE)
+
+# Print the summary of the best model
+summary(best_sarima_model)
+
+# Print the AIC of the best model
+cat("Best SARIMA model AIC for 4:", best_sarima_model$aic, "\n")
+```
+
+
+```{r}
+time_series5 <-ts(spread5$spread, frequency = 5)
+best_sarima_model <- auto.arima(time_series5, seasonal = TRUE, stepwise = FALSE, approximation = FALSE)
+
+# Print the summary of the best model
+summary(best_sarima_model)
+
+# Print the AIC of the best model
+cat("Best SARIMA model AIC for 5:", best_sarima_model$aic, "\n")
+```
+
+
+```{r}
+model1 <- sarima(time_series1, 3, 1, 0, 1, 0, 1, 5)
+model2 <- sarima(time_series2, 2, 1, 2, 1, 0, 0, 5)
+model3 <- sarima(time_series3, 1, 1, 1, 2, 0, 1, 5)
+model4 <- sarima(time_series4, 1, 1, 4)
+model5 <- sarima(time_series3, 0, 1, 3, 2, 0, 0, 5)
+```
