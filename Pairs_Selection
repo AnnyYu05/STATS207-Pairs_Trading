@@ -1,0 +1,37 @@
+with open('C:/Users/skvod/Downloads/close.csv', 'r') as file:
+    # Read lines from the file
+    lines = file.read().splitlines()
+stocks = []
+for line in lines:
+    stock = np.array(line.split(','), dtype='float')
+    stocks.append(stock)
+stocks = np.array(stocks)
+stocks = stocks.T
+
+stocks_normalized = stocks / stocks[:, 0][:, np.newaxis]
+num_stocks = 419
+num_days = 1259
+pairs_distance = {}
+for first in range(num_stocks):
+    for second in range(first + 1, num_stocks):
+        distance = np.linalg.norm(stocks_normalized[first, :] - stocks_normalized[second, :])
+        pairs_distance[distance] = [first, second]
+
+top_ten = []
+stocks_chosen = set()
+
+for distance in sorted(pairs_distance.keys()):
+    pair = pairs_distance[distance]
+    if pair[0] not in stocks_chosen and pair[1] not in stocks_chosen:
+        top_ten.append(pair)
+        stocks_chosen.add(pair[0])
+        stocks_chosen.add(pair[1])
+        if len(top_ten) == 10:
+            break
+
+with open('C:/Users/skvod/Downloads/tickers.csv', 'r') as file:
+    # Read lines from the file
+    tickers = file.read().splitlines()
+               
+for pair in top_ten:
+    print(tickers[pair[0]], tickers[pair[1]])
